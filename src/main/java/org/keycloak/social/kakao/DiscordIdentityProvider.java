@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.keycloak.social.discord;
+package org.keycloak.social.kakao;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.jboss.logging.Logger;
@@ -31,7 +31,8 @@ import org.keycloak.services.ErrorPageException;
 import org.keycloak.services.messages.Messages;
 
 import javax.ws.rs.core.Response;
-import java.util.Set;
+import java.io.IOException;
+import java.util.UUID;
 
 /**
  * @author <a href="mailto:wadahiro@gmail.com">Hiroyuki Wada</a>
@@ -41,12 +42,10 @@ public class DiscordIdentityProvider extends AbstractOAuth2IdentityProvider<Disc
 
     private static final Logger log = Logger.getLogger(DiscordIdentityProvider.class);
 
-    public static final String AUTH_URL = "https://discord.com/api/oauth2/authorize";
-    public static final String TOKEN_URL = "https://discord.com/api/oauth2/token";
-    public static final String PROFILE_URL = "https://discord.com/api/users/@me";
-    public static final String GROUP_URL = "https://discord.com/api/users/@me/guilds";
-    public static final String DEFAULT_SCOPE = "identify email";
-    public static final String GUILDS_SCOPE = "guilds";
+    public static final String AUTH_URL = "https://kauth.kakao.com/oauth/authorize";
+    public static final String TOKEN_URL = "https://kauth.kakao.com/oauth/token";
+    public static final String PROFILE_URL = "https://kapi.kakao.com/v2/user/me";
+    public static final String DEFAULT_SCOPE = "profile_nickname profile_image account_email";
 
     public DiscordIdentityProvider(KeycloakSession session, DiscordIdentityProviderConfig config) {
         super(session, config);
@@ -67,12 +66,25 @@ public class DiscordIdentityProvider extends AbstractOAuth2IdentityProvider<Disc
 
     @Override
     protected BrokeredIdentityContext extractIdentityFromProfile(EventBuilder event, JsonNode profile) {
+        log.info(profile);
         BrokeredIdentityContext user = new BrokeredIdentityContext(getJsonProperty(profile, "id"));
 
-        user.setUsername(getJsonProperty(profile, "username") + "#" + getJsonProperty(profile, "discriminator"));
-        user.setEmail(getJsonProperty(profile, "email"));
+        String nickname = profile.get("properties").get("nickname").asText();
+        String email = null;
+        if (profile.get("kakao_account").has("email") && !profile.get("kakao_account").get("email").isNull()) {
+            email = profile.get("kakao_account").get("email").asText();
+            user.setEmail(email);
+        } else {
+            user.setEmail("NO_EMAIL@email.com");
+        }
+
+        user.setUsername(UUID.randomUUID().toString());
         user.setIdpConfig(getConfig());
         user.setIdp(this);
+        user.setFirstName(nickname);
+        user.setLastName(nickname);
+
+        log.warn(user);
 
         AbstractJsonUserAttributeMapper.storeUserProfileForMapper(user, profile, getConfig().getAlias());
 
@@ -98,27 +110,11 @@ public class DiscordIdentityProvider extends AbstractOAuth2IdentityProvider<Disc
     }
 
     protected boolean isAllowedGuild(String accessToken) {
-        try {
-            JsonNode guilds = SimpleHttp.doGet(GROUP_URL, session).header("Authorization", "Bearer " + accessToken).asJson();
-            Set<String> allowedGuilds = getConfig().getAllowedGuildsAsSet();
-            for (JsonNode guild : guilds) {
-                String guildId = getJsonProperty(guild, "id");
-                if (allowedGuilds.contains(guildId)) {
-                    return true;
-                }
-            }
-            return false;
-        } catch (Exception e) {
-            throw new IdentityBrokerException("Could not obtain guilds the current user is a member of from discord.", e);
-        }
+        return false;
     }
 
     @Override
     protected String getDefaultScopes() {
-        if (getConfig().hasAllowedGuilds()) {
-            return DEFAULT_SCOPE + " " + GUILDS_SCOPE;
-        } else {
-            return DEFAULT_SCOPE;
-        }
+        return DEFAULT_SCOPE;
     }
 }

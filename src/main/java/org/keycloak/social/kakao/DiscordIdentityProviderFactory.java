@@ -15,9 +15,8 @@
  * limitations under the License.
  */
 
-package org.keycloak.social.discord;
+package org.keycloak.social.kakao;
 
-import org.keycloak.broker.oidc.OAuth2IdentityProviderConfig;
 import org.keycloak.broker.provider.AbstractIdentityProviderFactory;
 import org.keycloak.broker.social.SocialIdentityProviderFactory;
 import org.keycloak.models.IdentityProviderModel;
@@ -29,11 +28,11 @@ import org.keycloak.models.KeycloakSession;
 public class DiscordIdentityProviderFactory extends AbstractIdentityProviderFactory<DiscordIdentityProvider>
         implements SocialIdentityProviderFactory<DiscordIdentityProvider> {
 
-    public static final String PROVIDER_ID = "discord";
+    public static final String PROVIDER_ID = "kakao";
 
     @Override
     public String getName() {
-        return "Discord";
+        return "Kakao";
     }
 
     @Override

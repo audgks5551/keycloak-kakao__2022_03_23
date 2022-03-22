@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.keycloak.social.discord;
+package org.keycloak.social.kakao;
 
 import org.keycloak.broker.oidc.mappers.AbstractJsonUserAttributeMapper;
 
@@ -35,7 +35,7 @@ public class DiscordUserAttributeMapper extends AbstractJsonUserAttributeMapper 
 
 	@Override
 	public String getId() {
-		return "discord-user-attribute-mapper";
+		return "kakao-user-attribute-mapper";
 	}
 
 }

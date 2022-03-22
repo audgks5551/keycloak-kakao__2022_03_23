@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.keycloak.social.discord;
+package org.keycloak.social.kakao;
 
 import java.util.Arrays;
 import java.util.Collections;
